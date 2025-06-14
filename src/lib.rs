@@ -60,6 +60,20 @@ impl Venus {
         }
     }
 
+    pub async fn load_texture(&mut self, path: &str) -> Result<Texture, Error> {
+        let bytes = platter::load_file(path)
+            .await
+            .map_err(|error| Error::FileLoadError {
+                path: path.to_string(),
+                error,
+            })?;
+        let image = image::load_from_memory(&bytes).map_err(|error| Error::ImageDecodeError {
+            path: path.to_string(),
+            error: Box::new(error),
+        })?;
+        Ok(self.new_texture_from_bytes(image.as_bytes(), image.width(), image.height()))
+    }
+
     pub fn draw_rect(&mut self, x: f32, y: f32, width: f32, height: f32, color: Color) {
         self.gfx.push_rect(
             Rect {
@@ -110,4 +124,36 @@ pub struct Texture {
     handle: TextureHandle,
     width: u32,
     height: u32,
+}
+
+#[derive(Debug)]
+pub enum Error {
+    ImageDecodeError {
+        path: String,
+        error: Box<dyn std::error::Error + Send + Sync + 'static>,
+    },
+    FileLoadError {
+        path: String,
+        error: std::io::Error,
+    },
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::ImageDecodeError { path, error: _ } => {
+                write!(f, "Image decoding error when loading {path}")
+            }
+            Error::FileLoadError { path, error: _ } => write!(f, "Error loading file: {path}"),
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Error::ImageDecodeError { path: _, error } => Some(error.as_ref()),
+            Error::FileLoadError { path: _, error } => Some(error),
+        }
+    }
 }
