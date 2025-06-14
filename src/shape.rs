@@ -1,5 +1,6 @@
 use glam::{Mat3, Vec2};
 
+#[derive(Clone, Debug)]
 pub struct Rect {
     pub x: f32,
     pub y: f32,
@@ -8,6 +9,15 @@ pub struct Rect {
 }
 
 impl Rect {
+    pub fn new(x: f32, y: f32, width: f32, height: f32) -> Rect {
+        Rect {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+
     pub fn position(&self) -> Vec2 {
         Vec2 {
             x: self.x,
@@ -23,6 +33,7 @@ impl Rect {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct IRect {
     pub x: i32,
     pub y: i32,

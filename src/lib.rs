@@ -1,7 +1,12 @@
+use std::fmt::Display;
+
 use blinds::{CachedEventStream, Window};
 
+pub use blinds::Key;
 pub use color::Color;
-use shape::{Rect, orthographic_projection};
+pub use shape::Rect;
+
+use shape::orthographic_projection;
 use texture_atlas::TextureHandle;
 
 use graphics::Graphics;
