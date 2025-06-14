@@ -149,15 +149,15 @@ impl Graphics {
             region.x + region.width,
             region.y + region.height,
             color,
-            uv.x + region.width,
-            uv.y + region.height,
+            uv.x + uv.width,
+            uv.y + uv.height,
         );
         self.push_vertex(
             region.x,
             region.y + region.height,
             color,
             uv.x,
-            uv.y + region.height,
+            uv.y + uv.height,
         );
         self.index_data.extend_from_slice(&[
             index,
@@ -174,7 +174,7 @@ impl Graphics {
             return;
         }
 
-        self.vb.set_data(dbg!(&self.vertex_data));
+        self.vb.set_data(&self.vertex_data);
         self.eb.set_data(&self.index_data);
         // TODO-someday: maybe switch to draw_prepared, which requires more care to be taken with
         // safety but incurs less overhead
