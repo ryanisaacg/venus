@@ -47,6 +47,10 @@ impl Venus {
         );
     }
 
+    pub fn is_key_down(&self, key: Key) -> bool {
+        self.event_stream.cache().key(key)
+    }
+
     pub fn clear(&self, c: Color) {
         self.gfx.clear(c);
     }
