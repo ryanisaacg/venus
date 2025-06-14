@@ -27,7 +27,7 @@ impl Venus {
                     golem::Context::from_loader_function_cstr(|func| window.get_proc_address(func))
                 };
                 #[cfg(target_arch = "wasm32")]
-                let golem = golem::Context::from_webgl2_context(window.webgl2_context())?;
+                let golem = golem::Context::from_webgl2_context(window.webgl2_context());
                 let golem = golem.expect("graphics initialization");
                 let mut venus = Venus {
                     window,
