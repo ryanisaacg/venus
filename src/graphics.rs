@@ -120,8 +120,10 @@ impl Graphics {
     ) {
         let uv = if let Some((texture, uv)) = texture {
             let bind_point = texture.bind_point();
-            if self.bound_texture != Some(bind_point) {
-                self.flush();
+            if let Some(currently_bound) = self.bound_texture {
+                if bind_point != currently_bound {
+                    self.flush();
+                }
             }
             self.shader
                 .set_uniform("image", UniformValue::Int(bind_point.get() as i32))
