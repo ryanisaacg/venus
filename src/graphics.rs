@@ -1,5 +1,6 @@
 use std::num::NonZeroU32;
 
+use glam::Mat3;
 use golem::{
     Attribute, AttributeType, ElementBuffer, GeometryMode, ShaderDescription, ShaderProgram,
     Uniform, UniformType, UniformValue, VertexBuffer,
@@ -89,6 +90,16 @@ impl Graphics {
     pub fn clear(&self, color: Color) {
         self.ctx.set_clear_color(color.r, color.g, color.b, color.a);
         self.ctx.clear();
+    }
+
+    pub fn set_projection_matrix(&mut self, matrix: Mat3) {
+        self.flush();
+        self.shader.bind();
+        let mut data = [0.0; 9];
+        matrix.write_cols_to_slice(&mut data);
+        self.shader
+            .set_uniform("projection", UniformValue::Matrix3(data))
+            .expect("set projection matrix");
     }
 
     pub fn new_texture_from_bytes(

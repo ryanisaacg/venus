@@ -1,7 +1,7 @@
 use blinds::{CachedEventStream, Window};
 
 pub use color::Color;
-use shape::Rect;
+use shape::{Rect, orthographic_projection};
 use texture_atlas::TextureHandle;
 
 use graphics::Graphics;
@@ -29,11 +29,14 @@ impl Venus {
                 #[cfg(target_arch = "wasm32")]
                 let golem = golem::Context::from_webgl2_context(window.webgl2_context())?;
                 let golem = golem.expect("graphics initialization");
-                let venus = Venus {
+                let mut venus = Venus {
                     window,
                     event_stream: CachedEventStream::new(event_stream),
                     gfx: Graphics::new(golem),
                 };
+                venus
+                    .gfx
+                    .set_projection_matrix(orthographic_projection(0.0, 0.0, 1024.0, 768.0));
                 f(venus).await
             },
         );
