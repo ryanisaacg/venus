@@ -1,7 +1,7 @@
 use fontdue::Metrics;
 use rustc_hash::FxHashMap as HashMap;
 
-use crate::{Error, Texture, graphics::Graphics};
+use crate::{Error, Rect, Texture, graphics::Graphics};
 
 pub struct Font {
     pub font: fontdue::Font,
@@ -36,6 +36,12 @@ impl Font {
             let handle = graphics.new_texture_from_bytes(&buffer, width, height);
             let texture = Texture {
                 handle,
+                uv: Rect {
+                    x: 0.,
+                    y: 0.,
+                    width: 1.,
+                    height: 1.,
+                },
                 width,
                 height,
             };

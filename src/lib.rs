@@ -78,6 +78,12 @@ impl Venus {
         let handle = self.gfx.new_texture_from_bytes(image_data, width, height);
         Texture {
             handle,
+            uv: Rect {
+                x: 0.,
+                y: 0.,
+                width: 1.,
+                height: 1.,
+            },
             width,
             height,
         }
@@ -211,15 +217,7 @@ fn draw_image(gfx: &mut Graphics, texture: &Texture, x: f32, y: f32) {
             height: texture.height as f32,
         },
         Color::WHITE,
-        Some((
-            texture.handle,
-            Rect {
-                x: 0.0,
-                y: 0.0,
-                width: 1.0,
-                height: 1.0,
-            },
-        )),
+        Some((texture.handle, texture.uv.clone())),
     );
 }
 
@@ -238,8 +236,31 @@ fn draw_text_line(
 #[derive(Clone, Debug)]
 pub struct Texture {
     handle: TextureHandle,
+    uv: Rect,
     width: u32,
     height: u32,
+}
+
+impl Texture {
+    pub fn sub_texture(&self, x: u32, y: u32, width: u32, height: u32) -> Texture {
+        assert!(
+            x + width < self.width && y + height < self.height,
+            "sub-texture coordinates must be within the bounds of the texture"
+        );
+        let uv = Rect {
+            x: self.uv.x + (x as f32 / self.width as f32) * self.uv.width,
+            y: self.uv.y + (y as f32 / self.height as f32) * self.uv.height,
+            width: (width as f32 / self.width as f32) * self.uv.width,
+            height: (height as f32 / self.width as f32) * self.uv.width,
+        };
+
+        Texture {
+            handle: self.handle,
+            uv,
+            width,
+            height,
+        }
+    }
 }
 
 type OpaqueError = Box<dyn std::error::Error + Send + Sync + 'static>;
