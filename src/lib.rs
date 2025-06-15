@@ -1,6 +1,6 @@
-use std::fmt::Display;
+use std::{collections::HashSet, fmt::Display};
 
-use blinds::{CachedEventStream, Window};
+use blinds::{CachedEventStream, Event, Window};
 
 pub use blinds::Key;
 pub use color::Color;
@@ -20,6 +20,7 @@ pub struct Venus {
     window: Window,
     event_stream: CachedEventStream,
     gfx: Graphics,
+    just_pressed: HashSet<Key>,
 }
 
 impl Venus {
@@ -38,6 +39,7 @@ impl Venus {
                     window,
                     event_stream: CachedEventStream::new(event_stream),
                     gfx: Graphics::new(golem),
+                    just_pressed: HashSet::new(),
                 };
                 venus
                     .gfx
@@ -49,6 +51,10 @@ impl Venus {
 
     pub fn is_key_down(&self, key: Key) -> bool {
         self.event_stream.cache().key(key)
+    }
+
+    pub fn is_key_pressed(&self, key: Key) -> bool {
+        self.just_pressed.contains(&key)
     }
 
     pub fn clear(&self, c: Color) {
@@ -120,10 +126,15 @@ impl Venus {
     pub async fn end_frame(&mut self) {
         self.gfx.flush();
         self.window.present();
+        self.just_pressed.clear();
         loop {
             let event = self.event_stream.next_event().await;
-            if event.is_none() {
-                break;
+            match event {
+                None => break,
+                Some(Event::KeyboardInput(e)) if e.is_presed() => {
+                    self.just_pressed.insert(e.key());
+                }
+                _ => {}
             }
         }
     }
