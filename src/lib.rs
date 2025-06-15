@@ -1,6 +1,7 @@
-use std::{collections::HashSet, fmt::Display};
+use std::fmt::Display;
 
 use blinds::{CachedEventStream, Event, Window};
+use rustc_hash::FxHashSet as HashSet;
 
 pub use blinds::Key;
 pub use color::Color;
@@ -39,7 +40,7 @@ impl Venus {
                     window,
                     event_stream: CachedEventStream::new(event_stream),
                     gfx: Graphics::new(golem),
-                    just_pressed: HashSet::new(),
+                    just_pressed: HashSet::default(),
                 };
                 venus
                     .gfx

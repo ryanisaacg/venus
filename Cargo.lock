@@ -203,7 +203,7 @@ dependencies = [
  "image 0.23.14",
  "js-sys",
  "mint",
- "rustc-hash",
+ "rustc-hash 1.1.0",
  "smol_str",
  "wasm-bindgen",
  "web-sys",
@@ -1907,6 +1907,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
+name = "rustc-hash"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "357703d41365b4b27c590e3ed91eabb1b663f07c4c084095e60cbed4362dff0d"
+
+[[package]]
 name = "rustix"
 version = "0.38.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2302,6 +2308,7 @@ dependencies = [
  "golem",
  "image 0.25.6",
  "platter",
+ "rustc-hash 2.1.1",
  "thiserror 2.0.12",
 ]
 
