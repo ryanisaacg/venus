@@ -4,7 +4,7 @@ use glam::f32::Vec2;
 
 use crate::shape::{IRect, Rect};
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct TextureHandle {
     atlas: u32,
     index: u32,
@@ -62,7 +62,8 @@ impl TextureAtlas {
         let region = &self.pages[texture.atlas as usize].texture_uvs[texture.index as usize];
         let texture_point = Vec2::new(region.x as f32, region.y as f32) / ATLAS_SIZE_VEC2;
         let uv_position = texture_point + uv.position();
-        let uv_size = uv.size() / Vec2::new(region.width as f32, region.height as f32);
+        let texture_size = Vec2::new(region.width as f32, region.height as f32);
+        let uv_size = uv.size() * (texture_size / ATLAS_SIZE as f32);
         Rect {
             x: uv_position.x,
             y: uv_position.y,
