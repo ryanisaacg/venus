@@ -251,7 +251,7 @@ impl Texture {
             x: self.uv.x + (x as f32 / self.width as f32) * self.uv.width,
             y: self.uv.y + (y as f32 / self.height as f32) * self.uv.height,
             width: (width as f32 / self.width as f32) * self.uv.width,
-            height: (height as f32 / self.width as f32) * self.uv.width,
+            height: (height as f32 / self.height as f32) * self.uv.height,
         };
 
         Texture {
@@ -305,4 +305,29 @@ pub async fn load_file(path: &str) -> Result<Vec<u8>, Error> {
             error,
         })?;
     Ok(bytes)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn sub_texture() {
+        let texture = Texture {
+            handle: TextureHandle::mock(),
+            uv: Rect::new(0.0, 0.0, 0.5, 0.5),
+            width: 192,
+            height: 320,
+        };
+        // Basic width / height correctness
+        let sub_texture = texture.sub_texture(0, 0, 32, 32);
+        assert_eq!(
+            sub_texture.width as f32 / texture.width as f32,
+            sub_texture.uv.width / 2.0
+        );
+        assert_eq!(
+            sub_texture.height as f32 / texture.height as f32,
+            sub_texture.uv.height / 2.0
+        );
+    }
 }
