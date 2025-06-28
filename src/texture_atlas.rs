@@ -14,6 +14,11 @@ impl TextureHandle {
     pub(crate) fn bind_point(&self) -> NonZeroU32 {
         bind_point_for_atlas(self.atlas)
     }
+
+    #[cfg(test)]
+    pub(crate) fn mock() -> TextureHandle {
+        TextureHandle { atlas: 0, index: 0 }
+    }
 }
 
 pub struct TextureAtlas {
@@ -61,9 +66,9 @@ impl TextureAtlas {
     pub fn uv(&self, texture: TextureHandle, uv: Rect) -> Rect {
         let region = &self.pages[texture.atlas as usize].texture_uvs[texture.index as usize];
         let texture_point = Vec2::new(region.x as f32, region.y as f32) / ATLAS_SIZE_VEC2;
-        let uv_position = texture_point + uv.position();
-        let texture_size = Vec2::new(region.width as f32, region.height as f32);
-        let uv_size = uv.size() * (texture_size / ATLAS_SIZE as f32);
+        let size_ratio = Vec2::new(region.width as f32, region.height as f32) / ATLAS_SIZE as f32;
+        let uv_position = texture_point + uv.position() * size_ratio;
+        let uv_size = uv.size() * size_ratio;
         Rect {
             x: uv_position.x,
             y: uv_position.y,
