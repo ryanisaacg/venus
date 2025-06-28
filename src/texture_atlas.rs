@@ -1,6 +1,7 @@
 use std::num::NonZeroU32;
 
 use glam::f32::Vec2;
+use golem::TextureFilter;
 
 use crate::shape::{IRect, Rect};
 
@@ -101,8 +102,15 @@ enum TextureAllocationError {
 
 impl TexturePage {
     fn new(ctx: &golem::Context) -> TexturePage {
+        // TODO-someday: make linear vs nearest configurable
         let mut backing_texture = golem::Texture::new(ctx).expect("failed to allocate a texture");
         backing_texture.set_image(None, ATLAS_SIZE, ATLAS_SIZE, golem::ColorFormat::RGBA);
+        backing_texture
+            .set_minification(TextureFilter::Nearest)
+            .expect("failed to set minification");
+        backing_texture
+            .set_magnification(TextureFilter::Nearest)
+            .expect("failed to set magnification");
         TexturePage {
             backing_texture,
             cursor_x: 0,
