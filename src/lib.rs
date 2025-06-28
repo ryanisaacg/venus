@@ -3,7 +3,6 @@ use std::fmt::Display;
 use blinds::{CachedEventStream, Event, Window};
 use font::Font;
 use fontdue::Metrics;
-use glam::Vec2;
 use rustc_hash::FxHashSet as HashSet;
 
 pub use blinds::Key;
