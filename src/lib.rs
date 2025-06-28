@@ -3,6 +3,7 @@ use std::fmt::Display;
 use blinds::{CachedEventStream, Event, Window};
 use font::Font;
 use fontdue::Metrics;
+use glam::Vec2;
 use rustc_hash::FxHashSet as HashSet;
 
 pub use blinds::Key;
@@ -120,7 +121,29 @@ impl Venus {
     }
 
     pub fn draw_image(&mut self, texture: &Texture, x: f32, y: f32) {
-        draw_image(&mut self.gfx, texture, x, y);
+        draw_image(
+            &mut self.gfx,
+            texture,
+            Rect {
+                x,
+                y,
+                width: texture.width as f32,
+                height: texture.height as f32,
+            },
+        );
+    }
+
+    pub fn draw_image_sized(&mut self, texture: &Texture, x: f32, y: f32, width: f32, height: f32) {
+        draw_image(
+            &mut self.gfx,
+            texture,
+            Rect {
+                x,
+                y,
+                width,
+                height,
+            },
+        );
     }
 
     pub fn draw_text(&mut self, font: FontHandle, x: f32, y: f32, text: &str, size: u32) {
@@ -208,14 +231,9 @@ impl Venus {
 }
 
 // Required because otherwise draw_text mutably borrows Venus twice
-fn draw_image(gfx: &mut Graphics, texture: &Texture, x: f32, y: f32) {
+fn draw_image(gfx: &mut Graphics, texture: &Texture, target: Rect) {
     gfx.push_rect(
-        Rect {
-            x,
-            y,
-            width: texture.width as f32,
-            height: texture.height as f32,
-        },
+        target,
         Color::WHITE,
         Some((texture.handle, texture.uv.clone())),
     );
@@ -229,7 +247,11 @@ fn draw_text_line(
 ) {
     for (x_position, texture, metrics) in text_line_buffer.drain(..) {
         let y = topline + (size - metrics.height as f32) - (metrics.ymin as f32);
-        draw_image(gfx, &texture, x_position, y);
+        draw_image(
+            gfx,
+            &texture,
+            Rect::new(x_position, y, texture.width as f32, texture.height as f32),
+        );
     }
 }
 
