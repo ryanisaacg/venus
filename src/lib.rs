@@ -328,6 +328,25 @@ pub async fn load_file(path: &str) -> Result<Vec<u8>, Error> {
     Ok(bytes)
 }
 
+pub struct Animation {
+    frames: Vec<Texture>,
+    ticks_per_frame: u32,
+}
+
+impl Animation {
+    pub fn new(frames: Vec<Texture>, ticks_per_frame: u32) -> Animation {
+        Animation {
+            frames,
+            ticks_per_frame,
+        }
+    }
+
+    pub fn frame(&self, tick: u32) -> &Texture {
+        let frame = (tick / self.ticks_per_frame) % (self.frames.len() as u32);
+        &self.frames[frame as usize]
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
