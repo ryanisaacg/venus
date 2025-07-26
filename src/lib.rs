@@ -1,13 +1,13 @@
 use std::fmt::Display;
 
 use blinds::{CachedEventStream, Event, Window};
-use font::Font;
-use fontdue::Metrics;
+use font::{Font, TextRenderer};
 use rustc_hash::FxHashSet as HashSet;
 
 pub use blinds::Key;
 pub use color::Color;
 pub use shape::Rect;
+pub use sprite::{Animation, Sprite};
 
 use shape::orthographic_projection;
 use texture_atlas::TextureHandle;
@@ -18,6 +18,7 @@ mod color;
 mod font;
 mod graphics;
 mod shape;
+mod sprite;
 mod texture_atlas;
 
 pub struct Venus {
@@ -26,7 +27,7 @@ pub struct Venus {
     gfx: Graphics,
     just_pressed: HashSet<Key>,
     fonts: Vec<Font>,
-    text_line_temp_buffer: Vec<(f32, Texture, Metrics)>,
+    text_renderer: TextRenderer,
 }
 
 impl Venus {
@@ -47,7 +48,7 @@ impl Venus {
                     gfx: Graphics::new(golem),
                     just_pressed: HashSet::default(),
                     fonts: Vec::new(),
-                    text_line_temp_buffer: Vec::new(),
+                    text_renderer: TextRenderer::default(),
                 };
                 venus
                     .gfx
@@ -159,57 +160,46 @@ impl Venus {
         max_line_length: f32,
     ) {
         let font = &mut self.fonts[font.0 as usize];
-        let mut cursor_x = x;
-        let mut topline = y;
-
-        let line_metrics = font.font.horizontal_line_metrics(size as f32);
-        let line_height = line_metrics
-            .map(|metrics| metrics.new_line_size)
-            .unwrap_or(size as f32);
-
-        let prev_ch = None;
-        for ch in text.chars() {
-            if let Some(prev_ch) = prev_ch {
-                if let Some(kern) = font.font.horizontal_kern(prev_ch, ch, size as f32) {
-                    cursor_x += kern;
-                }
-            }
-
-            let mut x_position = cursor_x;
-            let (texture, metrics) = font.rasterize(ch, size, &mut self.gfx);
-            let mut flush = false;
-
-            if ch == '\n' {
-                flush = true;
-            } else {
-                cursor_x += metrics.advance_width;
-
-                if cursor_x >= x + max_line_length {
-                    flush = true;
-                }
-            }
-
-            if flush {
-                draw_text_line(
-                    &mut self.text_line_temp_buffer,
-                    &mut self.gfx,
-                    topline,
-                    size as f32,
-                );
-                cursor_x = x + metrics.advance_width;
-                topline += line_height;
-                x_position = x;
-            }
-
-            self.text_line_temp_buffer
-                .push((x_position, texture.clone(), metrics.clone()));
+        self.text_renderer
+            .layout_text(&mut self.gfx, font, x, y, text, size, max_line_length);
+        for (texture, _, x, y) in self.text_renderer.characters() {
+            draw_image(
+                &mut self.gfx,
+                &texture,
+                Rect {
+                    x,
+                    y,
+                    width: texture.width as f32,
+                    height: texture.height as f32,
+                },
+            );
         }
-        draw_text_line(
-            &mut self.text_line_temp_buffer,
-            &mut self.gfx,
-            topline,
-            size as f32,
-        );
+    }
+
+    pub fn layout_text(
+        &mut self,
+        font: FontHandle,
+        x: f32,
+        y: f32,
+        text: &str,
+        size: u32,
+        max_line_length: f32,
+        character_buffer: &mut Vec<(Texture, char, f32, f32)>,
+    ) {
+        let font = &mut self.fonts[font.0 as usize];
+        self.text_renderer
+            .layout_text(&mut self.gfx, font, x, y, text, size, max_line_length);
+        character_buffer.extend(self.text_renderer.characters());
+    }
+
+    pub fn text_width(&self, font: FontHandle, text: &str, size: u32) -> f32 {
+        let font = &self.fonts[font.0 as usize];
+        font.text_width(text, size)
+    }
+
+    pub fn line_height(&self, font: FontHandle, size: u32) -> f32 {
+        let font = &self.fonts[font.0 as usize];
+        font.line_height(size)
     }
 
     pub async fn end_frame(&mut self) {
@@ -236,22 +226,6 @@ fn draw_image(gfx: &mut Graphics, texture: &Texture, target: Rect) {
         Color::WHITE,
         Some((texture.handle, texture.uv.clone())),
     );
-}
-
-fn draw_text_line(
-    text_line_buffer: &mut Vec<(f32, Texture, Metrics)>,
-    gfx: &mut Graphics,
-    topline: f32,
-    size: f32,
-) {
-    for (x_position, texture, metrics) in text_line_buffer.drain(..) {
-        let y = topline + (size - metrics.height as f32) - (metrics.ymin as f32);
-        draw_image(
-            gfx,
-            &texture,
-            Rect::new(x_position, y, texture.width as f32, texture.height as f32),
-        );
-    }
 }
 
 #[derive(Clone, Debug)]
