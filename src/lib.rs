@@ -217,6 +217,10 @@ impl Venus {
             }
         }
     }
+
+    pub fn set_title(&self, title: &str) {
+        self.window.set_title(title);
+    }
 }
 
 // Required because otherwise draw_text mutably borrows Venus twice
