@@ -1,9 +1,12 @@
 use std::fmt::Display;
 
+use audio::AudioPlayer;
 use blinds::{CachedEventStream, Event, Window};
 use font::{Font, TextRenderer};
+use rodio::Source;
 use rustc_hash::FxHashSet as HashSet;
 
+pub use audio::{Audio, PlayingAudio};
 pub use blinds::Key;
 pub use color::Color;
 pub use shape::Rect;
@@ -13,6 +16,7 @@ use texture_atlas::TextureHandle;
 
 use graphics::Graphics;
 
+mod audio;
 mod color;
 mod font;
 mod graphics;
@@ -26,6 +30,7 @@ pub struct Venus {
     just_pressed: HashSet<Key>,
     fonts: Vec<Font>,
     text_renderer: TextRenderer,
+    audio: AudioPlayer,
 }
 
 impl Venus {
@@ -47,6 +52,7 @@ impl Venus {
                     just_pressed: HashSet::default(),
                     fonts: Vec::new(),
                     text_renderer: TextRenderer::default(),
+                    audio: AudioPlayer::new(),
                 };
                 venus
                     .gfx
@@ -88,6 +94,13 @@ impl Venus {
         }
     }
 
+    pub fn new_audio_from_bytes(&self, bytes: &[u8]) -> Result<Audio, Error> {
+        Audio::new(bytes.into()).map_err(|error| Error::AudioDecodeError {
+            path: None,
+            error: Box::new(error),
+        })
+    }
+
     pub async fn load_texture(&mut self, path: &str) -> Result<Texture, Error> {
         let bytes = load_file(path).await?;
         let image = image::load_from_memory(&bytes).map_err(|error| Error::ImageDecodeError {
@@ -103,6 +116,14 @@ impl Venus {
         let idx = self.fonts.len();
         self.fonts.push(font);
         Ok(FontHandle(idx as u32))
+    }
+
+    pub async fn load_audio(&mut self, path: &str) -> Result<Audio, Error> {
+        let bytes = load_file(path).await?;
+        Audio::new(bytes.into()).map_err(|error| Error::AudioDecodeError {
+            path: Some(path.to_string()),
+            error: Box::new(error),
+        })
     }
 
     pub fn draw_rect(&mut self, x: f32, y: f32, width: f32, height: f32, color: Color) {
@@ -200,10 +221,36 @@ impl Venus {
         font.line_height(size)
     }
 
+    pub fn set_title(&self, title: &str) {
+        self.window.set_title(title);
+    }
+
+    pub fn play_audio(&mut self, audio: &Audio) -> PlayingAudio {
+        self.audio.start(audio.source().unwrap().pausable(false))
+    }
+
+    pub fn loop_audio(&mut self, audio: &Audio) -> PlayingAudio {
+        self.audio
+            .start(audio.source().unwrap().pausable(false).repeat_infinite())
+    }
+
+    pub fn pause_audio(&self, handle: PlayingAudio) {
+        self.audio.pause(handle);
+    }
+
+    pub fn resume_audio(&self, handle: PlayingAudio) {
+        self.audio.play(handle);
+    }
+
+    pub fn stop_audio(&self, handle: PlayingAudio) {
+        self.audio.stop(handle);
+    }
+
     pub async fn end_frame(&mut self) {
         self.gfx.flush();
         self.window.present();
         self.just_pressed.clear();
+        self.audio.gc();
         loop {
             let event = self.event_stream.next_event().await;
             match event {
@@ -214,10 +261,6 @@ impl Venus {
                 _ => {}
             }
         }
-    }
-
-    pub fn set_title(&self, title: &str) {
-        self.window.set_title(title);
     }
 }
 
@@ -264,8 +307,18 @@ type OpaqueError = Box<dyn std::error::Error + Send + Sync + 'static>;
 
 #[derive(Debug)]
 pub enum Error {
-    ImageDecodeError { path: String, error: OpaqueError },
-    FileLoadError { path: String, error: std::io::Error },
+    ImageDecodeError {
+        path: String,
+        error: OpaqueError,
+    },
+    AudioDecodeError {
+        path: Option<String>,
+        error: OpaqueError,
+    },
+    FileLoadError {
+        path: String,
+        error: std::io::Error,
+    },
     FontError(&'static str),
 }
 
@@ -277,6 +330,14 @@ impl Display for Error {
             }
             Error::FileLoadError { path, error: _ } => write!(f, "Error loading file: {path}"),
             Error::FontError(error) => write!(f, "Error in font: {error}"),
+            Error::AudioDecodeError { path, error } => {
+                write!(f, "Error decoding audio from ")?;
+                match &path {
+                    Some(path) => write!(f, "{path}"),
+                    None => write!(f, "bytes"),
+                }?;
+                write!(f, ": {error}")
+            }
         }
     }
 }
@@ -284,7 +345,8 @@ impl Display for Error {
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Error::ImageDecodeError { path: _, error } => Some(error.as_ref()),
+            Error::ImageDecodeError { path: _, error }
+            | Error::AudioDecodeError { path: _, error } => Some(error.as_ref()),
             Error::FileLoadError { path: _, error } => Some(error),
             Error::FontError(_) => None,
         }

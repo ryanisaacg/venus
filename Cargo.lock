@@ -2629,6 +2629,7 @@ dependencies = [
  "platter",
  "rodio",
  "rustc-hash 2.1.1",
+ "slotmap",
  "thiserror 2.0.12",
 ]
 
