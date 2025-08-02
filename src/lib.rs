@@ -7,7 +7,6 @@ use rustc_hash::FxHashSet as HashSet;
 pub use blinds::Key;
 pub use color::Color;
 pub use shape::Rect;
-pub use sprite::{Animation, Sprite};
 
 use shape::orthographic_projection;
 use texture_atlas::TextureHandle;
@@ -18,7 +17,6 @@ mod color;
 mod font;
 mod graphics;
 mod shape;
-mod sprite;
 mod texture_atlas;
 
 pub struct Venus {
