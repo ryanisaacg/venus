@@ -20,7 +20,7 @@ impl Font {
 
     pub fn metrics(&self, ch: char, size: u32) -> Metrics {
         match self.characters.get(&(ch, size)) {
-            Some((_texture, size)) => size.clone(),
+            Some((_texture, size)) => *size,
             _ => self.font.metrics(ch, size as f32),
         }
     }
@@ -35,8 +35,7 @@ impl Font {
             let (metrics, buffer) = self.font.rasterize(ch, size as f32);
             let buffer: Vec<_> = buffer
                 .into_iter()
-                .map(|coverage| [255, 255, 255, coverage])
-                .flatten()
+                .flat_map(|coverage| [255, 255, 255, coverage])
                 .collect();
             let width = metrics.width as u32;
             let height = metrics.height as u32;
