@@ -243,7 +243,7 @@ pub struct Texture {
 impl Texture {
     pub fn sub_texture(&self, x: u32, y: u32, width: u32, height: u32) -> Texture {
         assert!(
-            x + width < self.width && y + height < self.height,
+            x + width <= self.width && y + height <= self.height,
             "sub-texture coordinates must be within the bounds of the texture"
         );
         let uv = Rect {
