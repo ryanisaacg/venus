@@ -2626,6 +2626,7 @@ dependencies = [
  "glam",
  "golem",
  "image 0.25.6",
+ "mint",
  "platter",
  "rodio",
  "rustc-hash 2.1.1",

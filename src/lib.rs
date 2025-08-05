@@ -33,10 +33,48 @@ pub struct Venus {
     audio: AudioPlayer,
 }
 
+pub struct Settings {
+    pub width: f32,
+    pub height: f32,
+    pub fullscreen: bool,
+    pub title: &'static str,
+    pub resizable: bool,
+}
+
+impl Default for Settings {
+    fn default() -> Settings {
+        Settings {
+            width: 1024.0,
+            height: 1024.0,
+            fullscreen: false,
+            title: "My Venus Game",
+            resizable: false,
+        }
+    }
+}
+
 impl Venus {
-    pub fn run<T: Future<Output = ()>, F: FnOnce(Venus) -> T + 'static>(f: F) {
+    pub fn run<T: Future<Output = ()>, F: FnOnce(Venus) -> T + 'static>(f: F, settings: Settings) {
+        let Settings {
+            width,
+            height,
+            fullscreen,
+            title,
+            resizable,
+        } = settings;
         blinds::run(
-            blinds::Settings::default(),
+            blinds::Settings {
+                size: mint::Vector2 {
+                    x: width,
+                    y: height,
+                },
+                cursor_icon: Some(blinds::CursorIcon::Default),
+                icon_path: None,
+                fullscreen,
+                multisampling: None,
+                resizable,
+                title,
+            },
             async move |window, event_stream| {
                 #[cfg(not(target_arch = "wasm32"))]
                 let golem = unsafe {
@@ -56,7 +94,8 @@ impl Venus {
                 };
                 venus
                     .gfx
-                    .set_projection_matrix(orthographic_projection(0.0, 0.0, 1024.0, 768.0));
+                    .set_projection_matrix(orthographic_projection(0.0, 0.0, width, height));
+
                 f(venus).await
             },
         );
@@ -124,6 +163,12 @@ impl Venus {
             path: Some(path.to_string()),
             error: Box::new(error),
         })
+    }
+
+    pub fn set_camera(&mut self, x: f32, y: f32, width: f32, height: f32) {
+        self.gfx.flush();
+        self.gfx
+            .set_projection_matrix(orthographic_projection(x, y, width, height));
     }
 
     pub fn draw_rect(&mut self, x: f32, y: f32, width: f32, height: f32, color: Color) {
