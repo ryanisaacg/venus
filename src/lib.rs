@@ -45,7 +45,7 @@ impl Default for Settings {
     fn default() -> Settings {
         Settings {
             width: 1024.0,
-            height: 1024.0,
+            height: 768.0,
             fullscreen: false,
             title: "My Venus Game",
             resizable: false,
