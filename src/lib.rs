@@ -31,6 +31,7 @@ pub struct Venus {
     fonts: Vec<Font>,
     text_renderer: TextRenderer,
     audio: AudioPlayer,
+    auto_clear_input_cache: bool,
 }
 
 pub struct Settings {
@@ -39,6 +40,7 @@ pub struct Settings {
     pub fullscreen: bool,
     pub title: &'static str,
     pub resizable: bool,
+    pub auto_clear_input_cache: bool,
 }
 
 impl Default for Settings {
@@ -49,6 +51,7 @@ impl Default for Settings {
             fullscreen: false,
             title: "My Venus Game",
             resizable: false,
+            auto_clear_input_cache: true,
         }
     }
 }
@@ -61,6 +64,7 @@ impl Venus {
             fullscreen,
             title,
             resizable,
+            auto_clear_input_cache,
         } = settings;
         blinds::run(
             blinds::Settings {
@@ -91,6 +95,7 @@ impl Venus {
                     fonts: Vec::new(),
                     text_renderer: TextRenderer::default(),
                     audio: AudioPlayer::new(),
+                    auto_clear_input_cache,
                 };
                 venus
                     .gfx
@@ -291,10 +296,16 @@ impl Venus {
         self.audio.stop(handle);
     }
 
+    pub fn clear_input_cache(&mut self) {
+        self.just_pressed.clear();
+    }
+
     pub async fn end_frame(&mut self) {
         self.gfx.flush();
         self.window.present();
-        self.just_pressed.clear();
+        if self.auto_clear_input_cache {
+            self.clear_input_cache();
+        }
         self.audio.gc();
         loop {
             let event = self.event_stream.next_event().await;
