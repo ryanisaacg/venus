@@ -126,10 +126,10 @@ impl TexturePage {
         width: u32,
         height: u32,
     ) -> Result<u32, TextureAllocationError> {
+        if self.cursor_y + self.line_height + height >= ATLAS_SIZE {
+            return Err(TextureAllocationError::CantFit);
+        }
         if self.cursor_x + width >= ATLAS_SIZE {
-            if self.cursor_y + self.line_height + height >= ATLAS_SIZE {
-                return Err(TextureAllocationError::CantFit);
-            }
             self.cursor_y += self.line_height;
             self.cursor_x = 0;
             self.line_height = 0;
